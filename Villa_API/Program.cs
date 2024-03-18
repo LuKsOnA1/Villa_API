@@ -1,7 +1,8 @@
-
-
 using Microsoft.EntityFrameworkCore;
+using Villa_API.AutoMapper;
 using Villa_API.Data;
+using Villa_API.Repository;
+using Villa_API.Repository.IRepository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddNewtonsoftJson()
     .AddXmlDataContractSerializerFormatters();
+
+// Adding AutoMapper config ...
+builder.Services.AddAutoMapper(typeof(MappingConfig));
+// Adding Repository config ...
+builder.Services.AddScoped<IVillaRepository,VillaRepository>();
+builder.Services.AddScoped<IVillaNumberRepository,VillaNumberRepository>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
