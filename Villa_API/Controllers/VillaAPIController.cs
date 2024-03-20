@@ -47,7 +47,7 @@ namespace Villa_API.Controllers
         }
 
 
-        [HttpGet("id", Name = "GetVilla")]
+        [HttpGet("{id}", Name = "GetVilla")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -130,7 +130,7 @@ namespace Villa_API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpDelete("id", Name = "DeleteVilla")]
+        [HttpDelete("{id}", Name = "DeleteVilla")]
         public async Task<ActionResult<APIResponse>> Delete(int id)
         {
             try
@@ -170,7 +170,7 @@ namespace Villa_API.Controllers
 
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpPut("id", Name = "UpdateVilla")]
+        [HttpPut("{id}", Name = "UpdateVilla")]
         public async Task<ActionResult<APIResponse>> UpdateVilla(int id, [FromBody] VillaUpdateDTO villaUpdateDTO)
         {
             try
@@ -205,7 +205,7 @@ namespace Villa_API.Controllers
 
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpPatch("id", Name = "UpdatePartialVilla")]
+        [HttpPatch("{id}", Name = "UpdatePartialVilla")]
         public async Task<IActionResult> UpdatePartialVilla(int id, JsonPatchDocument<VillaUpdateDTO> patchDTO)
         {
             if (id == 0 || patchDTO == null)

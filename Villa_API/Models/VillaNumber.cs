@@ -10,7 +10,7 @@ namespace Villa_API.Models
 
         [ForeignKey("Villa")]
         public int VillaId { get; set; }
-        public Villa villa { get; set; }
+        public Villa Villa { get; set; }
 
         public string SpecialDetails { get; set; }
         public DateTime CreatedDate { get; set; }
