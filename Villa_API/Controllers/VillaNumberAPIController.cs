@@ -49,20 +49,20 @@ namespace Villa_API.Controllers
 
 
 
-        [HttpGet("id", Name = "GetVillaNumber")]
+        [HttpGet("{id}", Name = "GetVillaNumber")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<APIResponse>> GetVillaNmuberById(int villaNo)
+        public async Task<ActionResult<APIResponse>> GetVillaNmuberById(int id)
         {
             try
             {
-                if (villaNo == 0)
+                if (id == 0)
                 {
                     return BadRequest();
                 }
 
-                var villaNumber = await _dbVillaNumber.GetAsync(x => x.VillaNo == villaNo);
+                var villaNumber = await _dbVillaNumber.GetAsync(x => x.VillaNo == id);
                 if (villaNumber == null)
                 {
                     return NotFound();
@@ -97,13 +97,13 @@ namespace Villa_API.Controllers
             {
                 if (await _dbVillaNumber.GetAsync(x => x.VillaNo == villaNumberCreateDTO.VillaNo) != null)
                 {
-                    ModelState.AddModelError("Custom Error", "Villa number already exists!");
+                    ModelState.AddModelError("ErrorMessages", "Villa number already exists!");
                     return BadRequest(ModelState);
                 }
 
                 if (await _dbVilla.GetAsync(x => x.Id == villaNumberCreateDTO.VillaId) == null)
                 {
-                    ModelState.AddModelError("Custom Error", "Villa Id does not exist! Try valid one. ");
+                    ModelState.AddModelError("ErrorMessages", "Villa Id does not exist! Try valid one. ");
                     return BadRequest(ModelState);
                 }
 
@@ -139,17 +139,17 @@ namespace Villa_API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpDelete("id", Name = "DeleteVillaNumber")]
-        public async Task<ActionResult<APIResponse>> DeleteVillaNumber(int villaNo)
+        [HttpDelete("{id}", Name = "DeleteVillaNumber")]
+        public async Task<ActionResult<APIResponse>> DeleteVillaNumber(int id)
         {
             try
             {
-                if (villaNo == 0)
+                if (id == 0)
                 {
                     return BadRequest();
                 }
 
-                var villaNumber = await _dbVillaNumber.GetAsync(x => x.VillaNo == villaNo);
+                var villaNumber = await _dbVillaNumber.GetAsync(x => x.VillaNo == id);
 
                 if (villaNumber == null)
                 {
@@ -180,19 +180,19 @@ namespace Villa_API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpPut("id", Name = "UpdateVillaNumber")]
-        public async Task<ActionResult<APIResponse>> UpdateVillaNumber(int villaNo, [FromBody] VillaNumberUpdateDTO villaNumberUpdateDTO)
+        [HttpPut("{id}", Name = "UpdateVillaNumber")]
+        public async Task<ActionResult<APIResponse>> UpdateVillaNumber(int id, [FromBody] VillaNumberUpdateDTO villaNumberUpdateDTO)
         {
             try
             {
-                if (villaNumberUpdateDTO == null || villaNo != villaNumberUpdateDTO.VillaNo)
+                if (villaNumberUpdateDTO == null || id != villaNumberUpdateDTO.VillaNo)
                 {
                     return BadRequest();
                 }
 
                 if (await _dbVilla.GetAsync(x => x.Id == villaNumberUpdateDTO.VillaId) == null)
                 {
-                    ModelState.AddModelError("Custom Error", "Villa Id does not exist! Try valid one.");
+                    ModelState.AddModelError("ErrorMessages", "Villa Id does not exist! Try valid one.");
                     return BadRequest(ModelState);
                 }
 

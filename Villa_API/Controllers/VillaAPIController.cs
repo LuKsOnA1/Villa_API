@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -24,6 +25,7 @@ namespace Villa_API.Controllers
 
 
         [HttpGet]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<APIResponse>> GetVillas()
         {
@@ -48,6 +50,9 @@ namespace Villa_API.Controllers
 
 
         [HttpGet("{id}", Name = "GetVilla")]
+        [Authorize(Roles = "Admin")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -57,6 +62,7 @@ namespace Villa_API.Controllers
             {
                 if (id == 0)
                 {
+                    
                     return BadRequest();
                 }
 
@@ -83,17 +89,20 @@ namespace Villa_API.Controllers
         }
 
 
+        [HttpPost]
+        [Authorize(Roles = "admin")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [HttpPost]
         public async Task<ActionResult<APIResponse>> CreateVilla([FromBody] VillaCreateDTO villaCreaeteDTO)
         {
             try
             {
                 if (await _dbVilla.GetAsync(x => x.Name.ToLower() == villaCreaeteDTO.Name.ToLower()) != null)
                 {
-                    ModelState.AddModelError("", "Villa already exists");
+                    ModelState.AddModelError("ErrorMessages", "Villa already exists");
                     return BadRequest(ModelState);
                 }
 
@@ -127,10 +136,13 @@ namespace Villa_API.Controllers
         }
 
 
+        [HttpDelete("{id}", Name = "DeleteVilla")]
+        [Authorize(Roles = "CUSTOM")]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpDelete("{id}", Name = "DeleteVilla")]
         public async Task<ActionResult<APIResponse>> Delete(int id)
         {
             try

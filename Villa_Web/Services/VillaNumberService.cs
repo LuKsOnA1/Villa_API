@@ -19,7 +19,7 @@ namespace Villa_Web.Services
 		{
 			return SendAsync<T>(new APIRequest
 			{
-				ApiType = SD.ApiType.GET,
+				ApiType = SD.ApiType.POST,
 				Data = dto,
 				Url = villaUrl + "/api/villaNumberAPI"
 				
