@@ -1,4 +1,4 @@
-﻿namespace Villa_API.Models.Dto
+﻿namespace Villa_API.Models.Dto.Security
 {
     public class RegistrationRequestDTO
     {
