@@ -1,4 +1,6 @@
-﻿namespace Villa_API.Models.Dto.Security
+﻿using Villa_API.Models.User;
+
+namespace Villa_API.Models.Dto.Security
 {
     public class LogInResponseDTO
     {

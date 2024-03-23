@@ -1,15 +1,19 @@
-﻿using AutoMapper;
+﻿using Asp.Versioning;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Text.Json;
 using Villa_API.Models;
 using Villa_API.Models.Dto.Villa;
+using Villa_API.Models.Pagination;
 using Villa_API.Repository.IRepository;
 
-namespace Villa_API.Controllers
+namespace Villa_API.Controllers.v1
 {
-    [Route("api/VillaAPI")]
+    [Route("api/v{version:apiVersion}/VillaAPI")]
+    [ApiVersion("1.0")]
     [ApiController]
     public class VillaAPIController : Controller
     {
@@ -20,23 +24,49 @@ namespace Villa_API.Controllers
         {
             _dbVilla = dbVilla;
             _mapper = mapper;
-            this._response = new();
+            _response = new();
         }
 
 
         [HttpGet]
-        [Authorize]
+        [ResponseCache(CacheProfileName = "Default30")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<APIResponse>> GetVillas()
+        public async Task<ActionResult<APIResponse>> GetVillas([FromQuery(Name = "Filter By Occupancy")]int? occupancy,
+            [FromQuery(Name = "Filter By Name")]string? search, int pageSize = 2, int pageNumber = 1)
         {
             try
             {
-                IEnumerable<Villa> villaList = await _dbVilla.GetAllAsync();
+                IEnumerable<Villa> villaList;
+                
+                if (occupancy > 0)
+                {
+                    villaList = await _dbVilla.GetAllAsync(x => x.Occupancy == occupancy, pageSize:pageSize,
+                        pageNumber:pageNumber);
+                }
+                else
+                {
+                    villaList = await _dbVilla.GetAllAsync(pageSize:pageSize, pageNumber:pageNumber);
+                }
+
+                if (!string.IsNullOrEmpty(search))
+                {
+                    search = search.ToLower();
+                    villaList = villaList.Where(x => x.Name.ToLower().Contains(search));
+                }
+
+                Pagination pagination = new()
+                {
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                };
+
+                Response.Headers.Append("X-pagination", JsonSerializer.Serialize(pagination));
+
                 _response.Result = _mapper.Map<List<VillaDTO>>(villaList);
                 _response.StatusCode = HttpStatusCode.OK;
                 return Ok(_response);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>()
@@ -50,7 +80,7 @@ namespace Villa_API.Controllers
 
 
         [HttpGet("{id}", Name = "GetVilla")]
-        [Authorize(Roles = "Admin")]
+        [ResponseCache(CacheProfileName = "Default30")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -62,14 +92,19 @@ namespace Villa_API.Controllers
             {
                 if (id == 0)
                 {
-                    
-                    return BadRequest();
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("ID must be greater than 0");
+                    return BadRequest(_response);
                 }
 
                 var villa = await _dbVilla.GetAsync(x => x.Id == id);
                 if (villa == null)
                 {
-                    return NotFound();
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Villa with given id does not exist!");
+                    return NotFound(_response);
                 }
 
                 _response.Result = _mapper.Map<VillaDTO>(villa);
@@ -90,7 +125,6 @@ namespace Villa_API.Controllers
 
 
         [HttpPost]
-        [Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -100,15 +134,21 @@ namespace Villa_API.Controllers
         {
             try
             {
+
                 if (await _dbVilla.GetAsync(x => x.Name.ToLower() == villaCreaeteDTO.Name.ToLower()) != null)
                 {
-                    ModelState.AddModelError("ErrorMessages", "Villa already exists");
-                    return BadRequest(ModelState);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Villa Name already exists. Try different Name!");
+                    return BadRequest(_response);
                 }
 
                 if (villaCreaeteDTO == null)
                 {
-                    return BadRequest(villaCreaeteDTO);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Error while creating. Try again later!");
+                    return BadRequest(_response);
                 }
 
 
@@ -137,7 +177,6 @@ namespace Villa_API.Controllers
 
 
         [HttpDelete("{id}", Name = "DeleteVilla")]
-        [Authorize(Roles = "CUSTOM")]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -149,7 +188,10 @@ namespace Villa_API.Controllers
             {
                 if (id == 0)
                 {
-                    return BadRequest();
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("ID must be greater than 0.");
+                    return BadRequest(_response);
                 }
 
                 // Finding villa by id ...
@@ -157,7 +199,10 @@ namespace Villa_API.Controllers
 
                 if (villa == null)
                 {
-                    return NotFound();
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Villa with given ID does not exist.");
+                    return NotFound(_response);
                 }
 
                 // Removing villa which we already found ...
@@ -180,16 +225,19 @@ namespace Villa_API.Controllers
         }
 
 
+        [HttpPut("{id}", Name = "UpdateVilla")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpPut("{id}", Name = "UpdateVilla")]
         public async Task<ActionResult<APIResponse>> UpdateVilla(int id, [FromBody] VillaUpdateDTO villaUpdateDTO)
         {
             try
             {
                 if (villaUpdateDTO == null || id != villaUpdateDTO.Id)
                 {
-                    return BadRequest();
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Villa with given ID does not exist.");
+                    return BadRequest(_response);
                 }
 
                 // Mapping VillaUpdateDTO to Villa ...
@@ -225,7 +273,7 @@ namespace Villa_API.Controllers
                 return BadRequest();
             }
 
-            var villa = await _dbVilla.GetAsync(x => x.Id == id, tracked:false);
+            var villa = await _dbVilla.GetAsync(x => x.Id == id, tracked: false);
 
             // Mapping Villa to VillaUpdateDTO ...
             VillaUpdateDTO villaUpdateDTO = _mapper.Map<VillaUpdateDTO>(villa);

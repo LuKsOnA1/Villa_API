@@ -1,5 +1,5 @@
-﻿using Villa_API.Models;
-using Villa_API.Models.Dto.Security;
+﻿using Villa_API.Models.Dto.Security;
+using Villa_API.Models.User;
 
 namespace Villa_API.Repository.IRepository
 {

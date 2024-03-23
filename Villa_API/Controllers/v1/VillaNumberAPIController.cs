@@ -1,14 +1,16 @@
-﻿using AutoMapper;
+﻿using Asp.Versioning;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using Villa_API.Models;
 using Villa_API.Models.Dto.VillaNumber;
 using Villa_API.Repository.IRepository;
 
-namespace Villa_API.Controllers
+namespace Villa_API.Controllers.v1
 {
-    [Route("api/VillaNumberAPI")]
+    [Route("api/v{version:apiVersion}/VillaNumberAPI")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class VillaNumberAPIController : ControllerBase
     {
         protected APIResponse _response;
@@ -20,22 +22,23 @@ namespace Villa_API.Controllers
         {
             _mapper = mapper;
             _dbVillaNumber = villaNumberRepository;
-            this._response = new();
+            _response = new();
             _dbVilla = dbVilla;
         }
 
         [HttpGet]
+        [ResponseCache(CacheProfileName = "Default30")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<APIResponse>> GetAllVillaNumbers()
         {
             try
             {
-                IEnumerable<VillaNumber> villaNumberList = await _dbVillaNumber.GetAllAsync(includeProperties:"Villa");
+                IEnumerable<VillaNumber> villaNumberList = await _dbVillaNumber.GetAllAsync(includeProperties: "Villa");
                 _response.Result = _mapper.Map<List<VillaNumberDTO>>(villaNumberList);
                 _response.StatusCode = HttpStatusCode.OK;
                 return Ok(_response);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>()
@@ -50,6 +53,7 @@ namespace Villa_API.Controllers
 
 
         [HttpGet("{id}", Name = "GetVillaNumber")]
+        [ResponseCache(CacheProfileName = "Default30")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -59,13 +63,19 @@ namespace Villa_API.Controllers
             {
                 if (id == 0)
                 {
-                    return BadRequest();
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("ID must be greater than 0");
+                    return BadRequest(_response);
                 }
 
                 var villaNumber = await _dbVillaNumber.GetAsync(x => x.VillaNo == id);
                 if (villaNumber == null)
                 {
-                    return NotFound();
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Villa Number with given 'VillaNo' does not exist!");
+                    return NotFound(_response);
                 }
 
                 _response.Result = _mapper.Map<VillaNumberDTO>(villaNumber);
@@ -73,7 +83,7 @@ namespace Villa_API.Controllers
 
                 return Ok(_response);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>()
@@ -97,19 +107,27 @@ namespace Villa_API.Controllers
             {
                 if (await _dbVillaNumber.GetAsync(x => x.VillaNo == villaNumberCreateDTO.VillaNo) != null)
                 {
-                    ModelState.AddModelError("ErrorMessages", "Villa number already exists!");
-                    return BadRequest(ModelState);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Villa Number with given 'VillaNo' already exists. Try different VillaNo!");
+                    return BadRequest(_response);
                 }
 
                 if (await _dbVilla.GetAsync(x => x.Id == villaNumberCreateDTO.VillaId) == null)
                 {
-                    ModelState.AddModelError("ErrorMessages", "Villa Id does not exist! Try valid one. ");
-                    return BadRequest(ModelState);
+                    //ModelState.AddModelError("ErrorMessages", "Villa Id does not exist! Try valid one. ");
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Villa ID does not exist. Try valid one!");
+                    return BadRequest(_response);
                 }
 
                 if (villaNumberCreateDTO == null)
                 {
-                    return BadRequest(villaNumberCreateDTO);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Something went wrong. Try again later!");
+                    return BadRequest(_response);
                 }
 
                 VillaNumber villaNumber = _mapper.Map<VillaNumber>(villaNumberCreateDTO);
@@ -121,7 +139,7 @@ namespace Villa_API.Controllers
                 _response.StatusCode = HttpStatusCode.Created;
                 return CreatedAtRoute("GetVillaNumber", new { id = villaNumber.VillaNo }, _response);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 _response.IsSuccess = false;
                 _response.ErrorMessages = new List<string>()
@@ -135,25 +153,31 @@ namespace Villa_API.Controllers
 
 
 
+        [HttpDelete("{id}", Name = "DeleteVillaNumber")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpDelete("{id}", Name = "DeleteVillaNumber")]
         public async Task<ActionResult<APIResponse>> DeleteVillaNumber(int id)
         {
             try
             {
                 if (id == 0)
                 {
-                    return BadRequest();
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("ID must be greater than 0.");
+                    return BadRequest(_response);
                 }
 
                 var villaNumber = await _dbVillaNumber.GetAsync(x => x.VillaNo == id);
 
                 if (villaNumber == null)
                 {
-                    return BadRequest();
+                    _response.StatusCode = HttpStatusCode.NotFound;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Villa Number with given 'VillaNo' does not exist.");
+                    return NotFound(_response);
                 }
 
                 await _dbVillaNumber.RemoveAsync(villaNumber);
@@ -177,23 +201,28 @@ namespace Villa_API.Controllers
 
 
 
+        [HttpPut("{id}", Name = "UpdateVillaNumber")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [HttpPut("{id}", Name = "UpdateVillaNumber")]
         public async Task<ActionResult<APIResponse>> UpdateVillaNumber(int id, [FromBody] VillaNumberUpdateDTO villaNumberUpdateDTO)
         {
             try
             {
                 if (villaNumberUpdateDTO == null || id != villaNumberUpdateDTO.VillaNo)
                 {
-                    return BadRequest();
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Villa Number with given 'VillaNo' does not exist.");
+                    return BadRequest(_response);
                 }
 
                 if (await _dbVilla.GetAsync(x => x.Id == villaNumberUpdateDTO.VillaId) == null)
                 {
-                    ModelState.AddModelError("ErrorMessages", "Villa Id does not exist! Try valid one.");
-                    return BadRequest(ModelState);
+                    _response.StatusCode = HttpStatusCode.BadRequest;
+                    _response.IsSuccess = false;
+                    _response.ErrorMessages.Add("Villa with given ID does not exist.");
+                    return BadRequest(_response);
                 }
 
                 VillaNumber villaNumber = _mapper.Map<VillaNumber>(villaNumberUpdateDTO);

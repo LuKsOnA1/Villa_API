@@ -1,4 +1,4 @@
-﻿namespace Villa_API.Models
+﻿namespace Villa_API.Models.User
 {
     public class LocalUser
     {

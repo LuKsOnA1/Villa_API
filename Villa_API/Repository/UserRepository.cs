@@ -3,8 +3,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Villa_API.Data;
-using Villa_API.Models;
 using Villa_API.Models.Dto.Security;
+using Villa_API.Models.User;
 using Villa_API.Repository.IRepository;
 
 namespace Villa_API.Repository

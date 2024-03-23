@@ -1,12 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using Villa_API.Models;
 using Villa_API.Models.Dto.Security;
 using Villa_API.Repository.IRepository;
 
-namespace Villa_API.Controllers
+namespace Villa_API.Controllers.Neutral
 {
-    [Route("api/UserAuth")]
+    [Route("api/v{version:apiVersion}/UserAuth")]
+    [ApiVersionNeutral]
     [ApiController]
     public class UserController : Controller
     {
@@ -16,7 +18,7 @@ namespace Villa_API.Controllers
         public UserController(IUserRepository userRepository)
         {
             _userRepository = userRepository;
-            this._response = new();
+            _response = new();
         }
 
 
@@ -42,7 +44,7 @@ namespace Villa_API.Controllers
         }
 
 
-        
+
         [HttpPost("register")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
