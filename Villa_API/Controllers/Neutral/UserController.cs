@@ -7,9 +7,10 @@ using Villa_API.Repository.IRepository;
 
 namespace Villa_API.Controllers.Neutral
 {
-    [Route("api/v{version:apiVersion}/UserAuth")]
-    [ApiVersionNeutral]
+    [Route("api/UserAuth")]
     [ApiController]
+    [ApiVersionNeutral]
+    
     public class UserController : Controller
     {
         private readonly IUserRepository _userRepository;

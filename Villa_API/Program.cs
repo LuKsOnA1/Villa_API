@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -7,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using Villa_API.AutoMapper;
 using Villa_API.Data;
+using Villa_API.Models.User;
 using Villa_API.Repository;
 using Villa_API.Repository.IRepository;
 
@@ -14,6 +16,10 @@ using Villa_API.Repository.IRepository;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+// Identity ...
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>();
 
 // Api Versioning ...
 builder.Services.AddApiVersioning(opt =>

@@ -1,5 +1,5 @@
-﻿using Villa_API.Models.Dto.Security;
-using Villa_API.Models.User;
+﻿using Villa_API.Models;
+using Villa_API.Models.Dto.Security;
 
 namespace Villa_API.Repository.IRepository
 {
@@ -7,6 +7,6 @@ namespace Villa_API.Repository.IRepository
     {
         bool IsUniqueUser(string username);
         Task<LogInResponseDTO> LogIn(LogInRequestDTO logInRequestDTO);
-        Task<LocalUser> Register(RegistrationRequestDTO registrationRequestDTO);
+        Task<UserDTO> Register(RegistrationRequestDTO registrationRequestDTO);
     }
 }
